@@ -157,6 +157,19 @@
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
+        .receipt-container {
+            font-size: 1rem; /* Adjust font size for the receipt modal */
+        }
+        .receipt-container h2 {
+            font-size: 1.5rem;
+        }
+        .receipt-container table {
+            font-size: 0.9rem;
+        }
+        .receipt-container .total-price {
+            font-size: 1.25rem;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen pb-32 text-base md:text-lg"> 
@@ -206,6 +219,8 @@
         <i class="fas fa-shopping-cart mr-3 text-3xl"></i> <span id="cartItemCount" class="item-count">0</span>
         ตะกร้า <span id="cartTotalPrice">0</span> บาท
     </button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
         // *** สำคัญมาก: เปลี่ยน URL นี้เป็น URL ของ Google Apps Script Web App ของคุณ ***
@@ -761,9 +776,9 @@
                 // The actual success/failure of data saving happens on the Apps Script side.
                 Swal.fire({
                     icon: 'success',
-                    didClose: () => { generateReceiptPage(orderData); },
+                    didClose: () => { generateReceiptModal(orderData); },
                     title: 'สั่งซื้อสำเร็จ!',
-                    text: 'คำสั่งซื้อของคุณถูกส่งไปยังระบบแล้ว กรุณารอสักครู่เพื่อยืนยันการบันทึก.',
+                    text: 'คำสั่งซื้อของคุณถูกส่งไปยังระบบแล้ว',
                     confirmButtonText: 'ตกลง',
                     customClass: { confirmButton: 'swal2-confirm-button-custom' },
                     buttonsStyling: false
@@ -827,117 +842,100 @@
             updateCartDisplay();
         });
 
-        function generateReceiptPage(orderData) {
-            const receiptWindow = window.open('', '_blank');
+
+        /**
+         * Generates and displays the receipt as a SweetAlert2 modal.
+         * @param {object} orderData - The order data to display.
+         */
+        function generateReceiptModal(orderData) {
             const orderDate = new Date().toLocaleString('th-TH');
-
-            receiptWindow.document.write(`
-                <html lang="th">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>ใบเสร็จรับเงิน</title>
-                    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-                    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
-                    <style>
-                        body {
-                            font-family: 'Sarabun', sans-serif;
-                            font-size: 1rem;
-                        }
-                        @media print {
-                            body {
-                                -webkit-print-color-adjust: exact;
-                            }
-                            button {
-                                display: none;
-                            }
-                        }
-                    </style>
-                </head>
-                <body class="p-8 font-sans text-lg">
-                    <div id="receipt-content" class="max-w-2xl mx-auto border p-6 rounded-lg shadow">
-                        <div class="flex items-center justify-between mb-6">
-                            <img src="https://i.postimg.cc/sgrzrM9t/S-2637831.jpg" class="h-16">
-                            <h2 class="text-2xl font-bold">ใบเสร็จรับเงิน</h2>
-                        </div>
-                        <p><b>วันที่:</b> ${orderDate}</p>
-                        <p><b>ลูกค้า:</b> ${orderData.customerName}</p>
-                        <p><b>เบอร์โทร:</b> ${orderData.phone}</p>
-                        <p><b>วิธีรับสินค้า:</b> ${orderData.deliveryMethod}</p>
-                        <p><b>ที่อยู่/โต๊ะ:</b> ${orderData.deliveryAddress || '-'}</p>
-                        <p><b>หมายเหตุ:</b> ${orderData.notes || '-'}</p>
-                        <hr class="my-4">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="border p-2 text-left">เมนู</th>
-                                    <th class="border p-2">จำนวน</th>
-                                    <th class="border p-2">ราคา</th>
+            const receiptContentHtml = `
+                <div id="receipt-content" class="text-left w-full mx-auto p-4 rounded-lg bg-white receipt-container">
+                    <div class="flex items-center justify-between mb-4">
+                        <img src="https://i.postimg.cc/sgrzrM9t/S-2637831.jpg" class="h-12">
+                        <h2 class="text-xl font-bold">ใบเสร็จรับเงิน</h2>
+                    </div>
+                    <p class="text-sm"><b>วันที่:</b> ${orderDate}</p>
+                    <p class="text-sm"><b>ลูกค้า:</b> ${orderData.customerName}</p>
+                    <p class="text-sm"><b>เบอร์โทร:</b> ${orderData.phone}</p>
+                    <p class="text-sm"><b>วิธีรับสินค้า:</b> ${orderData.deliveryMethod}</p>
+                    <p class="text-sm"><b>ที่อยู่/โต๊ะ:</b> ${orderData.deliveryAddress || '-'}</p>
+                    <p class="text-sm"><b>หมายเหตุ:</b> ${orderData.notes || '-'}</p>
+                    <hr class="my-3">
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border p-2 text-left">เมนู</th>
+                                <th class="border p-2">จำนวน</th>
+                                <th class="border p-2 text-right">ราคา</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orderData.cartItems.map(item => `
+                                <tr>
+                                    <td class="border p-2">${item.name}</td>
+                                    <td class="border p-2 text-center">${item.quantity}</td>
+                                    <td class="border p-2 text-right">${item.price * item.quantity} บาท</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                ${orderData.cartItems.map(item => `
-                                    <tr>
-                                        <td class="border p-2">${item.name}</td>
-                                        <td class="border p-2 text-center">${item.quantity}</td>
-                                        <td class="border p-2 text-right">${item.price * item.quantity} บาท</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <div class="text-right text-xl font-bold mt-4">
-                            รวมทั้งหมด: ${orderData.totalPrice} บาท
-                        </div>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="text-right text-base font-bold mt-4 total-price">
+                        รวมทั้งหมด: ${orderData.totalPrice} บาท
                     </div>
-                    <div class="mt-6 text-center print:hidden">
-                        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
-                            พิมพ์ใบเสร็จ
-                        </button>
-                        <button id="downloadBtn" class="bg-gray-400 text-white px-6 py-2 rounded-lg ml-4 cursor-not-allowed" disabled>
-                            กำลังเตรียมไฟล์...
-                        </button>
-                    </div>
-                </body>
-                </html>
-            `);
-
-            const head = receiptWindow.document.getElementsByTagName('head')[0];
-            const html2canvasScript = receiptWindow.document.createElement('script');
-            html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                </div>
+            `;
             
-            html2canvasScript.onload = () => {
-                const downloadBtn = receiptWindow.document.getElementById('downloadBtn');
-                downloadBtn.textContent = 'ดาวน์โหลดใบเสร็จ (รูปภาพ)';
-                downloadBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                downloadBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                downloadBtn.disabled = false;
-
-                receiptWindow.downloadReceiptImage = function() {
-                    const receiptContent = receiptWindow.document.getElementById('receipt-content');
-                    if (!receiptContent) {
-                        console.error("Could not find the receipt content element.");
-                        return;
-                    }
-                    html2canvas(receiptContent).then(canvas => {
-                        const link = receiptWindow.document.createElement('a');
-                        link.download = 'ใบเสร็จ_ร้านกระแกร่ง.png';
-                        link.href = canvas.toDataURL('image/png');
+            Swal.fire({
+                title: 'ใบเสร็จรับเงิน',
+                html: receiptContentHtml,
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'ดาวน์โหลดรูปภาพ',
+                cancelButtonText: 'ปิด',
+                customClass: {
+                    popup: 'swal2-popup-custom max-w-sm',
+                    confirmButton: 'swal2-confirm-button-custom',
+                    cancelButton: 'swal2-cancel-button-custom'
+                },
+                buttonsStyling: false,
+                didOpen: () => {
+                    // Attach download function to confirm button
+                    const confirmButton = Swal.getConfirmButton();
+                    confirmButton.onclick = () => {
+                        const receiptContent = document.getElementById('receipt-content');
+                        if (!receiptContent) {
+                            console.error("Could not find the receipt content element.");
+                            Swal.close();
+                            return;
+                        }
                         
-                        // This part is the key fix for consistent downloads on all browsers
-                        link.style.display = 'none';
-                        receiptWindow.document.body.appendChild(link);
-                        link.click();
-                        receiptWindow.document.body.removeChild(link);
-
-                    }).catch(error => {
-                        console.error("Error generating image:", error);
-                    });
-                };
-                
-                downloadBtn.addEventListener('click', receiptWindow.downloadReceiptImage);
-            };
-
-            head.appendChild(html2canvasScript);
-            receiptWindow.document.close();
+                        html2canvas(receiptContent, {
+                            scale: 2 // Higher scale for better quality on mobile
+                        }).then(canvas => {
+                            const link = document.createElement('a');
+                            link.download = `ใบเสร็จ_ร้านกระแกร่ง_${new Date().toLocaleDateString('th-TH')}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            
+                            // Programmatically click the link to trigger download
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            Swal.close(); // Close the modal after download is initiated
+                        }).catch(error => {
+                            console.error("Error generating image:", error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: 'ไม่สามารถสร้างไฟล์รูปภาพได้',
+                                confirmButtonText: 'ตกลง'
+                            });
+                        });
+                    };
+                }
+            });
         }
     </script>
 </body>
