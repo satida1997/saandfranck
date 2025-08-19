@@ -159,19 +159,31 @@
         }
         /* Adjusted styles for the receipt container */
         .receipt-container {
-            font-size: 0.9rem; /* Slightly smaller font for mobile */
-            padding: 1rem; /* Reduced padding */
+            font-size: 0.7rem; /* Adjusted based on user request */
+            padding: 1rem;
         }
         .receipt-container h2 {
-            font-size: 1.3rem; /* Adjusted heading size */
+            font-size: 1.1rem; /* Adjusted based on user request */
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .receipt-container h3 {
+            margin-top: 0.25rem;
         }
         .receipt-container table {
-            font-size: 0.8rem; /* Smaller font for table content */
-            border-collapse: collapse; /* Ensure borders are collapsed */
+            font-size: 0.6rem; /* Adjusted based on user request */
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
         }
         .receipt-container .total-price {
-            font-size: 1.1rem;
+            font-size: 0.9rem; /* Adjusted based on user request */
         }
+        .receipt-container .space-y-2 > div {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
         /* Specific adjustments for smaller screens */
         @media (max-width: 639px) {
             .receipt-container p {
@@ -182,7 +194,7 @@
                 margin-bottom: 0.25rem !important;
             }
             .receipt-container table td, .receipt-container table th {
-                padding: 0.75rem 0.5rem; /* Increased table cell padding for better spacing */
+                padding: 0.5rem 0.5rem;
             }
         }
 
